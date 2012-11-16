@@ -1,16 +1,42 @@
 # How to use
 
-    // INCLUDE COMPRESSOR CLASS
-    include('yuicompressor.php');
+    local.php
 
-    // INVOKE CLASS
-    $yui = new YUICompressor(JAR_PATH, TEMP_FILES_DIR, $options);
+    'YUI' => array(
+        'compressor' => array(
+            'compress' => true, 
+            'tmp' => "/../tmp",
+            'jar' => "{PATH-TO-APP}/vendor/dwsla/minify/lib/YUI/yuicompressor-2.4.2.jar",
+        ),
+    ),
+    
+    
+    module.config.php
+    
+    'controller_plugins' => array(
+        'factories' => array(
+        
+            'compressor' => function($sm){
 
-    // ADD FILES
-    $yui->addFile($absolute_path_to_file);
+                // get the "real" service manager frrom the "controller plugin" service manager
+                $serviceManager = $sm->getServiceLocator();
 
-    // ADD STRING
-    $yui->addString($string);
+                // extract the config we need
+                $config = $serviceManager->get('Config');
+                $jarFile = $config['YUI']['compressor']['jar'];
+                $tempDir = $config['YUI']['compressor']['tmp'];
 
-    // COMPRESS
-    $code = $yui->compress();
+                // inject into our plugin
+                $plugin = new \YUI\YUICompressor\YUICompressor($jarFile,$tempDir);
+                return $plugin;
+            },
+            
+        ),
+    ),
+    
+    
+    MyController.php
+    
+    $this->compressor()->setOption('type', 'css');
+    $this->compressor()->addString($css);
+    $output = $this->compressor()->compress();
